@@ -1,75 +1,97 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Calendar } from 'react-native-calendars';
+import Colors from '@/constants/Colors';
+import { useWorkoutHistory } from '@/context/WorkoutContext';
 
 export default function HomeScreen() {
+  const { history } = useWorkoutHistory();
+
+  const markedDates = useMemo(() => {
+    const dates: { [key: string]: object } = {};
+    const todayString = new Date().toISOString().split('T')[0];
+
+    // First, mark all workout days with a solid red background.
+    history.forEach(workout => {
+      const dateString = workout.date;
+      dates[dateString] = {
+        selected: true,
+        selectedColor: Colors.light.primary,
+        disableTouchEvent: true,
+      };
+    });
+
+    // *** THE FIX IS HERE ***
+    // Now, we specifically handle today's date to distinguish it.
+    const todayHasWorkout = !!dates[todayString];
+
+    if (todayHasWorkout) {
+      // If today has a workout, add a white dot to the existing red circle.
+      dates[todayString] = {
+        ...dates[todayString],
+        marked: true,
+        dotColor: 'white',
+      };
+    } 
+    // The `todayTextColor` from the theme will handle the case where
+    // today has no workout, coloring the number red.
+
+    return dates;
+  }, [history]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.container}>
+      <Text style={styles.title}>Your Consistency</Text>
+      <View style={styles.calendarContainer}>
+        <Calendar
+          current={new Date().toISOString().split('T')[0]}
+          markedDates={markedDates}
+          // The theme ensures the current day's TEXT is red,
+          // while workout days get a solid red BACKGROUND.
+          theme={{
+            backgroundColor: Colors.light.background,
+            calendarBackground: Colors.light.background,
+            textSectionTitleColor: Colors.light.subtitle,
+            selectedDayBackgroundColor: Colors.light.primary,
+            selectedDayTextColor: '#ffffff',
+            todayTextColor: Colors.light.primary, // This colors the current day's number
+            dayTextColor: Colors.light.text,
+            textDisabledColor: Colors.light.secondary,
+            dotColor: 'white', // Default dot color
+            selectedDotColor: 'white',
+            arrowColor: Colors.light.primary,
+            monthTextColor: Colors.light.text,
+            indicatorColor: 'blue',
+            textDayFontWeight: '300',
+            textMonthFontWeight: 'bold',
+            textDayHeaderFontWeight: '300',
+            textDayFontSize: 16,
+            textMonthFontSize: 18,
+            textDayHeaderFontSize: 16,
+          }}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+    paddingTop: 40,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.light.text,
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  calendarContainer: {
+    marginHorizontal: 10,
+    backgroundColor: Colors.light.card,
+    borderRadius: 10,
+    paddingVertical: 10,
+  }
 });

@@ -1,26 +1,35 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+// This file holds all the colors for your app.
+const tintColorLight = '#ff4444'; // Your primary red color
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
+export default {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: '#fff',
+    background: '#000',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#ccc',
+    tabIconDefault: '#ccc',
     tabIconSelected: tintColorLight,
+    danger: '#D92D2D',
+    primary: '#ff4444',
+    secondary: '#333',
+    card: '#111',
+    input: '#222',
+    subtitle: '#888',
+    warning: '#f59e0b', // A new warning color for the timer
   },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+  dark: { // We'll use the same colors for dark mode for now
+    text: '#fff',
+    background: '#000',
+    tint: tintColorLight,
+    icon: '#ccc',
+    tabIconDefault: '#ccc',
+    tabIconSelected: tintColorLight,
+    danger: '#D92D2D',
+    primary: '#ff4444',
+    secondary: '#333',
+    card: '#111',
+    input: '#222',
+    subtitle: '#888',
+    warning: '#f59e0b',
   },
 };

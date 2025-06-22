@@ -43,8 +43,6 @@ export default function StartWorkoutModal() {
     ]).start();
   };
 
-  // *** THE FIX IS HERE ***
-  // useFocusEffect runs when the screen comes into view, ensuring navigation is ready.
   useFocusEffect(
     useCallback(() => {
       const isSelectionState = ['dayType', 'subCategory', 'exerciseList'].includes(screenState);
@@ -56,8 +54,9 @@ export default function StartWorkoutModal() {
     if (!sessionActive) { if (intervalRef.current) clearInterval(intervalRef.current); return; };
     intervalRef.current = setInterval(() => {
         setSessionTimer(prev => prev + 1);
-        if (screenState === 'working') setWorkTimer(prev => prev + 1);
-        else if (screenState === 'resting') {
+        if (screenState === 'working') {
+            setWorkTimer(prev => prev + 1);
+        } else if (screenState === 'resting') {
             setRestTimer(prev => {
                 if (prev > 0) return prev - 1;
                 if (sessionTimer % 5 === 0) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -143,9 +142,20 @@ export default function StartWorkoutModal() {
       return (
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ flex: 1 }} scrollEnabled={screenState !== 'ready'}>
           <View style={styles.page}>
-            {screenState === 'ready' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session Paused</Text><Text style={styles.exerciseText}>{currentExercise}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
-            {screenState === 'working' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text><Text style={styles.exerciseText}>{currentExercise}</Text><Text style={styles.workTimerText}>Working: {formatTime(workTimer)}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButtonRest} onPress={handleRestPress}><Text style={styles.mainActionButtonText}>REST</Text></TouchableOpacity></Animated.View><Text style={styles.swipeHint}>Swipe for Log &gt;</Text><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
-            {screenState === 'resting' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text><Text style={[styles.timerLabel, restTimer === 0 && { color: Colors.light.warning }]}>{restTimer === 0 ? "REST OVERTIME" : "RESTING"}</Text><Text style={[styles.timer, restTimer === 0 && { color: Colors.light.warning }]}>{formatTime(restTimer)}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity><Text style={styles.swipeHint}>Swipe for Log &gt;</Text><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
+            {screenState === 'ready' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session Paused</Text><Text style={styles.exerciseText}>{currentExercise}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
+            {screenState === 'working' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text><Text style={styles.exerciseText}>{currentExercise}</Text><Text style={styles.workTimerText}>Working: {formatTime(workTimer)}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButtonRest} onPress={handleRestPress}><Text style={styles.mainActionButtonText}>REST</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><Text style={styles.swipeHint}>Swipe for Log &gt;</Text></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
+            {screenState === 'resting' && (
+                <View style={styles.centerContainer}>
+                    <Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text>
+                    <View style={styles.timerDisplayContainer}>
+                        <Text style={[styles.timerLabel, restTimer === 0 && { color: Colors.light.warning }]}>{restTimer === 0 ? "REST OVERTIME" : "RESTING"}</Text>
+                        <Text style={[styles.timer, restTimer === 0 && { color: Colors.light.warning }]}>{formatTime(restTimer)}</Text>
+                    </View>
+                    <Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View>
+                    <View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity><Text style={styles.swipeHint}>Swipe for Log &gt;</Text></View>
+                    <View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View>
+                </View>
+            )}
           </View>
           <View style={styles.page}><LiveLog log={workoutLog} /></View>
         </ScrollView>
@@ -175,10 +185,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: 'bold', color: Colors.light.text, textAlign: 'center', marginVertical: 20 },
   choiceButton: { backgroundColor: Colors.light.card, paddingVertical: 20, borderRadius: 10, marginBottom: 15 },
   choiceText: { color: Colors.light.text, fontSize: 20, textAlign: 'center', fontWeight: '600' },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  sessionTimerText: { color: Colors.light.subtitle, fontSize: 20, position: 'absolute', top: 20 },
+  // *** THE FIX IS HERE: Added padding to push the centered content up ***
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: '15%' },
+  sessionTimerText: { color: Colors.light.subtitle, fontSize: 20, position: 'absolute', top: 0 },
   exerciseText: { color: Colors.light.text, fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, paddingHorizontal: 20 },
   workTimerText: { color: Colors.light.subtitle, fontSize: 18, marginBottom: 20 },
+  // *** THE FIX IS HERE: Added consistent margin to all action buttons ***
   mainActionButton: { width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.light.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 40 },
   mainActionButtonRest: { width: 200, height: 200, borderRadius: 100, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginBottom: 40 },
   mainActionButtonText: { color: Colors.light.text, fontSize: 48, fontWeight: 'bold' },
@@ -191,7 +203,20 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 24, fontWeight: 'bold', color: Colors.light.text, marginBottom: 20 },
   logSetButton: { backgroundColor: Colors.light.primary, borderRadius: 10, padding: 15, marginTop: 20, width: '100%' },
   logSetButtonText: { color: Colors.light.text, fontWeight: 'bold', textAlign: 'center', fontSize: 18 },
+  timerDisplayContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   timerLabel: { color: Colors.light.subtitle, fontSize: 20, fontWeight: 'bold', marginBottom: 10, textTransform: 'uppercase' },
-  timer: { color: Colors.light.text, fontSize: 72, fontWeight: 'bold', marginBottom: 40, fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace' },
-  swipeHint: { color: Colors.light.subtitle, fontSize: 14, position: 'absolute', bottom: 100, },
+  timer: { color: Colors.light.text, fontSize: 120, fontWeight: 'bold', fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace' },
+  bottomLinksContainer: {
+    position: 'absolute',
+    bottom: 120,
+    alignItems: 'center',
+  },
+  swipeHint: { 
+    color: Colors.light.subtitle, 
+    fontSize: 14,
+    marginTop: 15,
+  },
 });

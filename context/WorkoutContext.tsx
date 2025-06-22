@@ -3,9 +3,8 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 // Define the shape of our log data
 export interface SetLog { reps: number; rpe: number }
 export interface ExerciseLog { name: string; sets: SetLog[]; workTime: number; restTime: number; }
-export interface Workout { date: string; totalTime: number; exercises: ExerciseLog[]; }
+export interface Workout { date: string; title: string; totalTime: number; exercises: ExerciseLog[]; }
 
-// Define what the context will provide
 interface WorkoutContextType {
   history: Workout[];
   addWorkoutToHistory: (workout: Workout) => void;
@@ -17,7 +16,6 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   const [history, setHistory] = useState<Workout[]>([]);
 
   const addWorkoutToHistory = (workout: Workout) => {
-    // Add the new workout to the beginning of the history array
     setHistory(prevHistory => [workout, ...prevHistory]);
   };
 
@@ -28,7 +26,6 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook to easily use the context in any component
 export const useWorkoutHistory = () => {
   const context = useContext(WorkoutContext);
   if (context === undefined) {

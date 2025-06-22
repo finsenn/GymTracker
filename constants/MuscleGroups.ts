@@ -1,7 +1,5 @@
 // Maps exercises to their primary muscle group for the heatmap feature.
-
 export const MUSCLE_GROUPS: Record<string, string> = {
-  // PUSH
   'Bench Press': 'chest',
   'Overhead Press': 'shoulders',
   'Incline Dumbbell Press': 'chest',
@@ -10,8 +8,6 @@ export const MUSCLE_GROUPS: Record<string, string> = {
   'Chest Fly': 'chest',
   'Dips': 'triceps',
   'Skull Crushers': 'triceps',
-
-  // PULL
   'Deadlift': 'back',
   'Pull-ups': 'back',
   'Bent Over Row': 'back',
@@ -21,8 +17,6 @@ export const MUSCLE_GROUPS: Record<string, string> = {
   'T-Bar Row': 'back',
   'Hammer Curls': 'biceps',
   'Preacher Curls': 'biceps',
-
-  // LEGS
   'Squat': 'quads',
   'Romanian Deadlift': 'hamstrings',
   'Leg Press': 'quads',

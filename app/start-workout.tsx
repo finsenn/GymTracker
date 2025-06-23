@@ -188,8 +188,8 @@ const styles = StyleSheet.create({
   // *** THE FIX IS HERE: Added padding to push the centered content up ***
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: '15%' },
   sessionTimerText: { color: Colors.light.subtitle, fontSize: 20, position: 'absolute', top: 0 },
-  exerciseText: { color: Colors.light.text, fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, paddingHorizontal: 20 },
-  workTimerText: { color: Colors.light.subtitle, fontSize: 18, marginBottom: 20 },
+  exerciseText: { color: Colors.light.text, fontSize: 50, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, paddingHorizontal: 20 },
+  workTimerText: { color: Colors.light.subtitle, fontSize: 18, marginBottom: 75 },
   // *** THE FIX IS HERE: Added consistent margin to all action buttons ***
   mainActionButton: { width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.light.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 40 },
   mainActionButtonRest: { width: 200, height: 200, borderRadius: 100, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginBottom: 40 },

@@ -7,19 +7,20 @@ import Colors from '@/constants/Colors';
 import { WORKOUTS } from '@/constants/Workouts';
 import SliderInput from '@/components/SliderInput';
 import LiveLog from '@/components/LiveLog';
-import { useWorkoutHistory, ExerciseLog, SetLog } from '@/context/WorkoutContext';
+import { useWorkoutHistory, ExerciseLog, SetLog, Workout } from '@/context/WorkoutContext';
 
 type ScreenState = 'dayType' | 'subCategory' | 'exerciseList' | 'ready' | 'working' | 'resting';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function StartWorkoutModal() {
   const [screenState, setScreenState] = useState<ScreenState>('dayType');
-  const { addWorkoutToHistory } = useWorkoutHistory();
+  const { addWorkoutToHistory, history } = useWorkoutHistory();
   const navigation = useNavigation();
   const shakeAnimation = useRef(new Animated.Value(0)).current;
   const [dayCategory, setDayCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
   const [currentExercise, setCurrentExercise] = useState('');
+  const [lastPerformance, setLastPerformance] = useState<string | null>(null);
   const [workoutLog, setWorkoutLog] = useState<Record<string, ExerciseLog>>({});
   const [isLoggingModalVisible, setIsLoggingModalVisible] = useState(false);
   const [tempReps, setTempReps] = useState(8);
@@ -72,9 +73,23 @@ export default function StartWorkoutModal() {
     setScreenState(nextState);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
+  
+  const findLastPerformance = (exerciseName: string) => {
+    for (const workout of history) {
+      const foundExercise = workout.exercises.find(ex => ex.name === exerciseName);
+      if (foundExercise && foundExercise.sets.length > 0) {
+        const firstSet = foundExercise.sets[0];
+        return `Last time (1st set): ${firstSet.reps} reps @ RPE ${firstSet.rpe}`;
+      }
+    }
+    return null;
+  };
 
   const handleExerciseSelect = (exercise: string) => {
-    setCurrentExercise(exercise); setScreenState('ready'); setWorkTimer(0);
+    setCurrentExercise(exercise); 
+    setLastPerformance(findLastPerformance(exercise));
+    setScreenState('ready'); 
+    setWorkTimer(0);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
@@ -128,34 +143,23 @@ export default function StartWorkoutModal() {
   
   const renderContent = () => {
     if (isSelectionState) {
-      if (screenState === 'dayType') {
-        return ( <ScrollView contentContainerStyle={styles.scrollContainer}><Text style={styles.title}>What day is it?</Text><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('subCategory')('ppl')}><Text style={styles.choiceText}>PPL</Text></TouchableOpacity><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('subCategory')('upperlower')}><Text style={styles.choiceText}>Upper / Lower</Text></TouchableOpacity><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('exerciseList')('fullbody')}><Text style={styles.choiceText}>Full Body</Text></TouchableOpacity><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('subCategory')('bro')}><Text style={styles.choiceText}>Bro Split</Text></TouchableOpacity></ScrollView> );
-      }
-      if (screenState === 'subCategory') {
-        const categories = { ppl: ['Push', 'Pull', 'Legs'], upperlower: ['Upper', 'Lower'], bro: ['Chest', 'Back', 'Arms', 'Legs'] }[dayCategory] || [];
-        return ( <ScrollView contentContainerStyle={styles.scrollContainer}><Text style={styles.title}>{dayCategory.toUpperCase()}</Text>{categories.map(cat => (<TouchableOpacity key={cat} style={styles.choiceButton} onPress={() => selectAndGoTo('exerciseList')(cat)}><Text style={styles.choiceText}>{cat}</Text></TouchableOpacity>))}</ScrollView> );
-      }
-      if (screenState === 'exerciseList') {
-        return ( <View style={{flex: 1}}><Text style={styles.title}>Choose your poison</Text><ScrollView contentContainerStyle={styles.scrollContainer}>{getWorkoutList().map(ex => (<TouchableOpacity key={ex} style={styles.choiceButton} onPress={() => handleExerciseSelect(ex)}><Text style={styles.choiceText}>{ex}</Text></TouchableOpacity>))}</ScrollView></View> );
-      }
+        if (screenState === 'dayType') {
+          return ( <ScrollView contentContainerStyle={styles.scrollContainer}><Text style={styles.title}>What day is it?</Text><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('subCategory')('ppl')}><Text style={styles.choiceText}>PPL</Text></TouchableOpacity><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('subCategory')('upperlower')}><Text style={styles.choiceText}>Upper / Lower</Text></TouchableOpacity><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('exerciseList')('fullbody')}><Text style={styles.choiceText}>Full Body</Text></TouchableOpacity><TouchableOpacity style={styles.choiceButton} onPress={() => selectAndGoTo('subCategory')('bro')}><Text style={styles.choiceText}>Bro Split</Text></TouchableOpacity></ScrollView> );
+        }
+        if (screenState === 'subCategory') {
+          const categories = { ppl: ['Push', 'Pull', 'Legs'], upperlower: ['Upper', 'Lower'], bro: ['Chest', 'Back', 'Arms', 'Legs'] }[dayCategory] || [];
+          return ( <ScrollView contentContainerStyle={styles.scrollContainer}><Text style={styles.title}>{dayCategory.toUpperCase()}</Text>{categories.map(cat => (<TouchableOpacity key={cat} style={styles.choiceButton} onPress={() => selectAndGoTo('exerciseList')(cat)}><Text style={styles.choiceText}>{cat}</Text></TouchableOpacity>))}</ScrollView> );
+        }
+        if (screenState === 'exerciseList') {
+          return ( <View style={{flex: 1}}><Text style={styles.title}>Choose your poison</Text><ScrollView contentContainerStyle={styles.scrollContainer}>{getWorkoutList().map(ex => (<TouchableOpacity key={ex} style={styles.choiceButton} onPress={() => handleExerciseSelect(ex)}><Text style={styles.choiceText}>{ex}</Text></TouchableOpacity>))}</ScrollView></View> );
+        }
     } else {
       return (
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ flex: 1 }} scrollEnabled={screenState !== 'ready'}>
           <View style={styles.page}>
-            {screenState === 'ready' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session Paused</Text><Text style={styles.exerciseText}>{currentExercise}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
-            {screenState === 'working' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text><Text style={styles.exerciseText}>{currentExercise}</Text><Text style={styles.workTimerText}>Working: {formatTime(workTimer)}</Text><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButtonRest} onPress={handleRestPress}><Text style={styles.mainActionButtonText}>REST</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><Text style={styles.swipeHint}>Swipe for Log &gt;</Text></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
-            {screenState === 'resting' && (
-                <View style={styles.centerContainer}>
-                    <Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text>
-                    <View style={styles.timerDisplayContainer}>
-                        <Text style={[styles.timerLabel, restTimer === 0 && { color: Colors.light.warning }]}>{restTimer === 0 ? "REST OVERTIME" : "RESTING"}</Text>
-                        <Text style={[styles.timer, restTimer === 0 && { color: Colors.light.warning }]}>{formatTime(restTimer)}</Text>
-                    </View>
-                    <Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View>
-                    <View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity><Text style={styles.swipeHint}>Swipe for Log &gt;</Text></View>
-                    <View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View>
-                </View>
-            )}
+            {screenState === 'ready' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session Paused</Text><View style={styles.topContentContainer}><Text style={styles.exerciseText}>{currentExercise}</Text>{lastPerformance && <Text style={styles.lastPerformanceText}>{lastPerformance}</Text>}</View><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
+            {screenState === 'working' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text><View style={styles.topContentContainer}><Text style={styles.exerciseText}>{currentExercise}</Text>{lastPerformance && <Text style={styles.lastPerformanceText}>{lastPerformance}</Text>}<Text style={styles.workTimerText}>Working: {formatTime(workTimer)}</Text></View><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButtonRest} onPress={handleRestPress}><Text style={styles.mainActionButtonText}>REST</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity><Text style={styles.swipeHint}>Swipe for Log &gt;</Text></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
+            {screenState === 'resting' && (<View style={styles.centerContainer}><Text style={styles.sessionTimerText}>Session: {formatTime(sessionTimer)}</Text><View style={styles.topContentContainer}><Text style={[styles.timerLabel, restTimer === 0 && { color: Colors.light.warning }]}>{restTimer === 0 ? "REST OVERTIME" : "RESTING"}</Text><Text style={[styles.timer, restTimer === 0 && { color: Colors.light.warning }]}>{formatTime(restTimer)}</Text></View><Animated.View style={animatedButtonStyle}><TouchableOpacity style={styles.mainActionButton} onPress={handleWorkPress}><Text style={styles.mainActionButtonText}>WORK</Text></TouchableOpacity></Animated.View><View style={styles.bottomLinksContainer}><TouchableOpacity onPress={() => setScreenState('exerciseList')}><Text style={styles.linkText}>Change Workout</Text></TouchableOpacity><Text style={styles.swipeHint}>Swipe for Log &gt;</Text></View><View style={styles.finishButtonContainer}><TouchableOpacity style={styles.finishButton} onPress={handleFinishWorkout}><Text style={styles.finishButtonText}>FINISH</Text></TouchableOpacity></View></View>)}
           </View>
           <View style={styles.page}><LiveLog log={workoutLog} /></View>
         </ScrollView>
@@ -185,12 +189,24 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: 'bold', color: Colors.light.text, textAlign: 'center', marginVertical: 20 },
   choiceButton: { backgroundColor: Colors.light.card, paddingVertical: 20, borderRadius: 10, marginBottom: 15 },
   choiceText: { color: Colors.light.text, fontSize: 20, textAlign: 'center', fontWeight: '600' },
-  // *** THE FIX IS HERE: Added padding to push the centered content up ***
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: '15%' },
+  centerContainer: { flex: 1, alignItems: 'center', paddingVertical: 20, paddingBottom: '50%' },
   sessionTimerText: { color: Colors.light.subtitle, fontSize: 20, position: 'absolute', top: 0 },
-  exerciseText: { color: Colors.light.text, fontSize: 50, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, paddingHorizontal: 20 },
-  workTimerText: { color: Colors.light.subtitle, fontSize: 18, marginBottom: 75 },
-  // *** THE FIX IS HERE: Added consistent margin to all action buttons ***
+  topContentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  exerciseText: { color: Colors.light.text, fontSize: 36, fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 20 },
+  lastPerformanceText: {
+    color: Colors.light.subtitle,
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 10,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  workTimerText: { color: Colors.light.subtitle, fontSize: 18, marginTop: 10 },
   mainActionButton: { width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.light.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 40 },
   mainActionButtonRest: { width: 200, height: 200, borderRadius: 100, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginBottom: 40 },
   mainActionButtonText: { color: Colors.light.text, fontSize: 48, fontWeight: 'bold' },

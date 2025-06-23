@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
-// Define the shape of our log data
-export interface SetLog { reps: number; rpe: number }
+// THE FIX IS HERE: Added 'weight' to the SetLog interface
+export interface SetLog { reps: number; rpe: number; weight: number; }
 export interface ExerciseLog { name: string; sets: SetLog[]; workTime: number; restTime: number; }
 export interface Workout { date: string; title: string; totalTime: number; exercises: ExerciseLog[]; }
 

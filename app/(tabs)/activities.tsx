@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, LayoutAnimation, UI
 import Colors from '@/constants/Colors';
 import { useWorkoutHistory, Workout, ExerciseLog } from '@/context/WorkoutContext';
 import { FontAwesome } from '@expo/vector-icons';
-import WorkoutHeatmap from '@/components/WorkoutHeatmap'; // We will use the heatmap component here
+import WorkoutHeatmap from '@/components/WorkoutHeatmap';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -32,12 +32,16 @@ const ExerciseDetailItem: React.FC<{ exercise: ExerciseLog }> = ({ exercise }) =
                 <View style={styles.setsContainer}>
                      <View style={styles.logHeader}>
                         <Text style={styles.headerText}>Set</Text>
+                        {/* THE FIX IS HERE: Added Weight to the header */}
+                        <Text style={styles.headerText}>Weight</Text>
                         <Text style={styles.headerText}>Reps</Text>
                         <Text style={styles.headerText}>RPE</Text>
                     </View>
                     {exercise.sets.map((set, setIndex) => (
                         <View key={setIndex} style={styles.logRow}>
                             <Text style={styles.rowText}>{setIndex + 1}</Text>
+                            {/* THE FIX IS HERE: Display the weight */}
+                            <Text style={styles.rowText}>{set.weight}kg</Text>
                             <Text style={styles.rowText}>{set.reps}</Text>
                             <Text style={styles.rowText}>{set.rpe}</Text>
                         </View>
@@ -144,7 +148,8 @@ const styles = StyleSheet.create({
     color: Colors.light.subtitle,
     fontSize: 14,
     fontWeight: '600',
-    width: '33%',
+    // THE FIX IS HERE: Adjusted width for 4 columns
+    width: '25%',
     textAlign: 'center',
   },
   logRow: {
@@ -155,7 +160,8 @@ const styles = StyleSheet.create({
   rowText: {
     color: Colors.light.text,
     fontSize: 16,
-    width: '33%',
+    // THE FIX IS HERE: Adjusted width for 4 columns
+    width: '25%',
     textAlign: 'center',
   },
 });

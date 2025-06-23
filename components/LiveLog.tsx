@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
 import Colors from '@/constants/Colors';
 import { ExerciseLog } from '@/context/WorkoutContext';
@@ -37,12 +37,14 @@ const ExerciseLogItem: React.FC<{ exercise: ExerciseLog }> = ({ exercise }) => {
             <View style={styles.detailsContainer}>
                 <View style={styles.logHeader}>
                     <Text style={styles.headerText}>Set</Text>
+                    <Text style={styles.headerText}>Weight</Text>
                     <Text style={styles.headerText}>Reps</Text>
                     <Text style={styles.headerText}>RPE</Text>
                 </View>
                 {exercise.sets.map((set, setIndex) => (
                     <View key={setIndex} style={styles.logRow}>
                         <Text style={styles.rowText}>{setIndex + 1}</Text>
+                        <Text style={styles.rowText}>{set.weight}kg</Text>
                         <Text style={styles.rowText}>{set.reps}</Text>
                         <Text style={styles.rowText}>{set.rpe}</Text>
                     </View>
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
     color: Colors.light.subtitle,
     fontSize: 16,
     fontWeight: '600',
-    width: '33%',
+    width: '25%',
     textAlign: 'center',
   },
   logRow: {
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
   rowText: {
     color: Colors.light.text,
     fontSize: 18,
-    width: '33%',
+    width: '25%',
     textAlign: 'center',
   },
 });

@@ -1,13 +1,13 @@
-import LiveLog from '@/components/LiveLog';
-import SliderInput from '@/components/SliderInput';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Modal, Platform, Animated, Dimensions } from 'react-native';
+import { router, useFocusEffect, useNavigation } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { FontAwesome } from '@expo/vector-icons';
 import Colors from '@/constants/Colors';
 import { WORKOUTS } from '@/constants/Workouts';
-import { ExerciseLog, SetLog, useWorkoutHistory } from '@/context/WorkoutContext';
-import { FontAwesome } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { router, useFocusEffect, useNavigation } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import SliderInput from '@/components/SliderInput';
+import LiveLog from '@/components/LiveLog';
+import { useWorkoutHistory, ExerciseLog, SetLog, Workout } from '@/context/WorkoutContext';
 
 type ScreenState = 'dayType' | 'subCategory' | 'exerciseList' | 'ready' | 'working' | 'resting';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -25,7 +25,6 @@ export default function StartWorkoutModal() {
   const [isLoggingModalVisible, setIsLoggingModalVisible] = useState(false);
   const [tempReps, setTempReps] = useState(8);
   const [tempRpe, setTempRpe] = useState(8);
-  // Add state for logging weight
   const [tempWeight, setTempWeight] = useState(60);
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionTimer, setSessionTimer] = useState(0);
@@ -81,7 +80,6 @@ export default function StartWorkoutModal() {
       const foundExercise = workout.exercises.find(ex => ex.name === exerciseName);
       if (foundExercise && foundExercise.sets.length > 0) {
         const firstSet = foundExercise.sets[0];
-        // Add weight to the performance hint
         return `Last time: ${firstSet.weight}kg for ${firstSet.reps} reps @ RPE ${firstSet.rpe}`;
       }
     }
@@ -114,12 +112,10 @@ export default function StartWorkoutModal() {
   };
   
   const handleLogSet = () => {
-    // Include weight in the new set log
     const newSet: SetLog = { reps: tempReps, rpe: tempRpe, weight: tempWeight };
     const currentLog = workoutLog[currentExercise] || { name: currentExercise, sets: [], workTime: 0, restTime: 0 };
     setWorkoutLog({ ...workoutLog, [currentExercise]: { ...currentLog, sets: [...currentLog.sets, newSet], workTime: currentLog.workTime + workTimer }});
     setIsLoggingModalVisible(false); setScreenState('resting');
-    // Reset all temp values
     setTempReps(8); setTempRpe(8); setTempWeight(60);
   };
   
@@ -132,6 +128,22 @@ export default function StartWorkoutModal() {
         addWorkoutToHistory({ date: dateString, title: workoutTitle, totalTime: sessionTimer, exercises: finalLog });
     }
     router.replace({ pathname: '/recap', params: { log: JSON.stringify(finalLog), totalTime: sessionTimer, date: new Date().toISOString().split('T')[0] } });
+  };
+
+  const handleBackPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (screenState === 'subCategory') {
+      setDayCategory('');
+      setScreenState('dayType');
+    } else if (screenState === 'exerciseList') {
+      if (dayCategory === 'fullbody') {
+        setDayCategory('');
+        setScreenState('dayType');
+      } else {
+        setSubCategory('');
+        setScreenState('subCategory');
+      }
+    }
   };
 
   const getWorkoutList = () => {
@@ -176,15 +188,16 @@ export default function StartWorkoutModal() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        {(screenState === 'subCategory' || screenState === 'exerciseList') && (
+            <TouchableOpacity onPress={handleBackPress}>
+                <FontAwesome name="chevron-left" size={24} color={Colors.light.text} />
+            </TouchableOpacity>
+        )}
+        <View style={{flex: 1}} />
         {isSelectionState && (<TouchableOpacity onPress={() => router.back()}><FontAwesome name="close" size={24} color={Colors.light.text} /></TouchableOpacity>)}
       </View>
       <Modal visible={isLoggingModalVisible} transparent={true} animationType="fade">
-        <View style={styles.modalContainer}><View style={styles.modalView}><Text style={styles.modalTitle}>Log Your Set</Text>
-            <SliderInput label="Weight (kg)" min={0} max={300} step={2.5} value={tempWeight} onValueChange={setTempWeight} />
-            <SliderInput label="Reps" min={1} max={30} step={1} value={tempReps} onValueChange={setTempReps} />
-            <SliderInput label="RPE" min={1} max={10} step={0.5} value={tempRpe} onValueChange={setTempRpe} />
-            <TouchableOpacity style={styles.logSetButton} onPress={handleLogSet}><Text style={styles.logSetButtonText}>LOG IT</Text></TouchableOpacity>
-        </View></View>
+        <View style={styles.modalContainer}><View style={styles.modalView}><Text style={styles.modalTitle}>Log Your Set</Text><SliderInput label="Weight (kg)" min={0} max={300} step={2.5} value={tempWeight} onValueChange={setTempWeight} /><SliderInput label="Reps" min={1} max={30} step={1} value={tempReps} onValueChange={setTempReps} /><SliderInput label="RPE" min={1} max={10} step={0.5} value={tempRpe} onValueChange={setTempRpe} /><TouchableOpacity style={styles.logSetButton} onPress={handleLogSet}><Text style={styles.logSetButtonText}>LOG IT</Text></TouchableOpacity></View></View>
       </Modal>
       {renderContent()}
     </SafeAreaView>
@@ -194,12 +207,12 @@ export default function StartWorkoutModal() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.light.background, paddingTop: Platform.OS === 'android' ? 25 : 0 },
   page: { width: SCREEN_WIDTH },
-  header: { height: 50, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 20 },
+  header: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
   scrollContainer: { paddingHorizontal: 20 },
   title: { fontSize: 32, fontWeight: 'bold', color: Colors.light.text, textAlign: 'center', marginVertical: 20 },
   choiceButton: { backgroundColor: Colors.light.card, paddingVertical: 20, borderRadius: 10, marginBottom: 15 },
   choiceText: { color: Colors.light.text, fontSize: 20, textAlign: 'center', fontWeight: '600' },
-  centerContainer: { flex: 1, alignItems: 'center', paddingVertical: 20, paddingBottom: '50%' },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20, paddingBottom: '50%' },
   sessionTimerText: { color: Colors.light.subtitle, fontSize: 20, position: 'absolute', top: 0 },
   topContentContainer: {
     flex: 1,

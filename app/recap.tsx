@@ -1,9 +1,50 @@
-import StyledButton from '@/components/StyledButton';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { ExerciseLog } from '@/context/WorkoutContext';
-import { router, useLocalSearchParams } from 'expo-router';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import StyledButton from '@/components/StyledButton';
+import { FontAwesome } from '@expo/vector-icons';
+
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// This is our new reusable component for the recap screen
+const RecapExerciseItem: React.FC<{ exercise: ExerciseLog }> = ({ exercise }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const toggleExpand = () => {
+        // This creates the smooth animation
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setIsExpanded(!isExpanded);
+    };
+
+    return (
+        <View style={styles.exerciseCard}>
+            <TouchableOpacity onPress={toggleExpand} style={styles.exerciseHeader}>
+                <Text style={styles.exerciseName}>{exercise.name}</Text>
+                <FontAwesome name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={Colors.light.subtitle} />
+            </TouchableOpacity>
+
+            {isExpanded && (
+                <View style={styles.setsContainer}>
+                    {exercise.sets.map((set, setIndex) => (
+                        <View key={setIndex} style={styles.setRow}>
+                            <Text style={styles.setText}>Set {setIndex + 1}</Text>
+                            <Text style={styles.setText}>{set.weight}kg</Text>
+                            <Text style={styles.setText}>{set.reps} reps</Text>
+                             
+                            <Text style={styles.setText}>@ RPE {set.rpe}</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
+        </View>
+    );
+};
+
 
 export default function RecapScreen() {
   const params = useLocalSearchParams();
@@ -28,18 +69,13 @@ export default function RecapScreen() {
             <View style={styles.summaryItem}><Text style={styles.summaryLabel}>Total</Text><Text style={styles.summaryValue}>{formatTime(totalTime)}</Text></View>
             <View style={styles.summaryItem}><Text style={styles.summaryLabel}>Work</Text><Text style={styles.summaryValue}>{formatTime(totalWorkTime)}</Text></View>
             <View style={styles.summaryItem}><Text style={styles.summaryLabel}>Rest</Text><Text style={styles.summaryValue}>{formatTime(totalRestTime)}</Text></View>
+            
         </View>
 
         {log.map((exercise, index) => (
-          <View key={index} style={styles.exerciseCard}>
-            <Text style={styles.exerciseName}>{exercise.name}</Text>
-            {exercise.sets.map((set, setIndex) => (
-              <View key={setIndex} style={styles.setRow}><Text style={styles.setText}>Set {setIndex + 1}</Text><Text style={styles.setText}>{set.reps} reps</Text><Text style={styles.setText}>@ RPE {set.rpe}</Text></View>
-            ))}
-          </View>
+          <RecapExerciseItem key={index} exercise={exercise} />
         ))}
 
-        {/* THE FIX IS HERE: Changed to router.back() to simply dismiss the modal. */}
         <StyledButton title="FINISH" onPress={() => router.back()} />
       </ScrollView>
     </SafeAreaView>
@@ -56,7 +92,19 @@ const styles = StyleSheet.create({
     summaryLabel: { color: Colors.light.subtitle, fontSize: 14 },
     summaryValue: { color: Colors.light.text, fontSize: 20, fontWeight: 'bold', marginTop: 5 },
     exerciseCard: { backgroundColor: Colors.light.card, borderRadius: 10, padding: 20, marginBottom: 15 },
-    exerciseName: { color: Colors.light.primary, fontSize: 22, fontWeight: 'bold', marginBottom: 15, borderBottomWidth: 1, borderBottomColor: Colors.light.secondary, paddingBottom: 10 },
+    exerciseName: { color: Colors.light.primary, fontSize: 22, fontWeight: 'bold' },
     setRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
     setText: { color: Colors.light.text, fontSize: 16 },
+    // New styles for the collapsible component
+    exerciseHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    setsContainer: {
+        marginTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: Colors.light.secondary,
+        paddingTop: 5,
+    },
 });

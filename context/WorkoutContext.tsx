@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, ReactNode, useContext, useState } from 'react';
 
 // THE FIX IS HERE: Added 'weight' to the SetLog interface
 export interface SetLog { reps: number; rpe: number; weight: number; }

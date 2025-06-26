@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import StyledButton from '@/components/StyledButton';
 import Colors from '@/constants/Colors';
 import { ExerciseLog } from '@/context/WorkoutContext';
-import WorkoutHeatmap from '@/components/WorkoutHeatmap';
-import StyledButton from '@/components/StyledButton';
+import { router, useLocalSearchParams } from 'expo-router';
+import React from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function RecapScreen() {
   const params = useLocalSearchParams();
@@ -30,8 +29,6 @@ export default function RecapScreen() {
             <View style={styles.summaryItem}><Text style={styles.summaryLabel}>Work</Text><Text style={styles.summaryValue}>{formatTime(totalWorkTime)}</Text></View>
             <View style={styles.summaryItem}><Text style={styles.summaryLabel}>Rest</Text><Text style={styles.summaryValue}>{formatTime(totalRestTime)}</Text></View>
         </View>
-
-        <WorkoutHeatmap exercises={log} />
 
         {log.map((exercise, index) => (
           <View key={index} style={styles.exerciseCard}>
